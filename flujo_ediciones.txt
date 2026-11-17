@@ -1,0 +1,40 @@
+flowchart TD
+    Inicio([Inicio: Mes de Octubre - 31 Días / 1,000 Clientes]) --> TipoCliente{¿Cuenta con Telemetría?}
+
+    %% Rama 1: Sin Telemetría o Datos Incompletos
+    TipoCliente -- "No / Datos < 744 (aprox. 200 clientes)" --> PlanLectura[Plan de Lectura: Ingeniero asigna ruta a Lecturistas]
+    PlanLectura --> VisitaLecturista[Lecturistas visitan estaciones: TDL, fotos y observaciones]
+    VisitaLecturista --> RevisionCMF[Revisión de Información CMF: ¿Observaciones correctas vs. evidencia?]
+
+    RevisionCMF -- No --> ModificarObs[Modificar observación según criterio de validación]
+    RevisionCMF -- Sí --> RegistrarCMF[Registrar resultado en CMF: OK / No OK]
+
+    ModificarObs --> RegistrarCMF
+
+    RegistrarCMF --> CondicionNoOK{¿Condición?}
+    CondicionNoOK -- OK --> DatosFactura([Data Correcta para Facturación])
+    CondicionNoOK -- No OK --> AnalizarCausa[Revisar casos No OK e identificar causa: TXT incompleto, batería, etc.]
+
+    AnalizarCausa --> EvaluarHistorial[Evaluar Historial de la estación en Control Mensual]
+    
+    EvaluarHistorial --> CondHistorial{¿Situación?}
+    CondHistorial -- "Misma condición anterior / Inoperativa" --> MantenerProceso[Mantener en proceso de lectura e inspección con deuda]
+    CondHistorial -- "Edición Continua / Bateria Agotada" --> CalcularDatos[Calcular Data: Diferencia de acumuladores y factor promedio 6 meses]
+
+    MantenerProceso --> RegCarga
+    CalcularDatos --> RegCarga[Registrar resultados de edición en formato de carga e indicador X]
+
+    RegCarga --> FinProceso([Finalizar Proceso: Data Lista para Facturación con trazabilidad])
+
+    %% Rama 2: Con Telemetría (800 clientes)
+    TipoCliente -- "Sí (aprox. 800 clientes)" --> ValDiaria{Validación Diaria GMAS: Registros completos? 744 datos}
+    ValDiaria -- "Sí (744)" --> DatosFactura
+    ValDiaria -- "No (<744)" --> AlarmaGMAS[Operador de GMAS detecta alarma de falla]
+
+    AlarmaGMAS --> EsperaRecup{¿Esperar recuperación? PLUM: 2 días, Actaris: 4 días}
+    EsperaRecup -- Sí --> FalsaAlarma[Observación Temporal / Falsa Alarma]
+    EsperaRecup -- No --> CausasFalla[Causas de Falla: UC apagada, desincronización, cambio UC, falla almacenamiento, firmware]
+
+    CausasFalla --> PreEdicion[Ingeniero de Medición realiza PRE-EDICIÓN: Cálculo por Neteo Proporcional]
+    PreEdicion --> DataNeteada([Data Neteada para Facturación])
+    FalsaAlarma --> DatosFactura
